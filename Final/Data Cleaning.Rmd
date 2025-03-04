@@ -1,0 +1,63 @@
+---
+title: "Cleaning Data"
+author: "Sage Gray"
+date: "2025-03-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(regclass)
+library(fpp3)
+library(zoo)
+```
+
+
+```{r data}
+
+#Probably more we can do with review_id
+ash_rev <- read.csv('train-data/ashville_reviews.csv')
+den_rev <- read.csv('train-data/denver_reviews.csv')
+haw_rev <- read.csv('train-data/hawaii_reviews.csv')
+
+```
+
+Check for missing/erroneous info
+```{r}
+which(is.na(ash_rev))
+which(is.na(den_rev))
+which(is.na(haw_rev))
+#No NA's
+```
+
+Convert Date column into readable dates
+```{r}
+haw_rev <- haw_rev |>
+  mutate(date = as_date(date)) |>
+  mutate(date = yearmonth(date)) |>
+  group_by(date)|>
+  summarize(n_reviews = n())
+
+den_rev <- den_rev |>
+  mutate(date = as_date(date)) |>
+  mutate(date = yearmonth(date)) |>
+  group_by(date)|>
+  summarize(n_reviews = n())
+  
+ash_rev <- ash_rev |>
+  mutate(date = as_date(date)) |>
+  mutate(date = yearmonth(date)) |>
+  group_by(date)|>
+  summarize(n_reviews = n())
+
+merged_df <- merge(den_rev, haw_rev, by= "date", all = TRUE)
+merged_df <- merge(merged_df, ash_rev, by = "date", all = TRUE)
+names(merged_df) <- c("date", "denver_n_reviews", "hawaii_n_reviews", "denver_n_reviews")
+merged_df[is.na(merged_df)] <- 0
+merged_df
+```
+export df as csv
+```{r}
+write.csv(merged_df,"merged_df.csv", row.names = FALSE)
+```
+
